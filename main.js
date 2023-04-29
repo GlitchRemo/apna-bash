@@ -3,13 +3,22 @@ const utils = require('./lib/utils.js');
 const {parser, tokenizer} = require('./lib/parser.js');
 const {display} = require('./lib/display.js');
 
+const handleWildcard = function(path, pwd) {
+  if(path === '*') return fs.readdirSync(pwd);
+  return path;
+}
+
 const execute = function(env, {command, args}) {
   if(utils[command] === undefined) {
     const error = `apna-bash: command not found: ${command}`;
     return {...env, errorStream: [...env.errorStream, error]}
   }
 
-  return utils[command](env, args);
+  const paths = args.flatMap(function (arg) {
+    return handleWildcard(arg, env.PWD);
+  });
+
+  return utils[command](env, paths);
 }
 
 const main = function() {
