@@ -1,14 +1,15 @@
 const fs = require('fs');
 const utils = require('./lib/utils.js');
-const {parser} = require('./lib/parser.js');
+const {parser, tokenizer} = require('./lib/parser.js');
+const {display} = require('./lib/display.js');
 
-const execute = function(environment, {command, args}) {
+const execute = function(env, {command, args}) {
   if(utils[command] === undefined) {
-    console.error('Invalid command');
-    process.exit(1);
+    const error = `apna-bash: command not found: ${command}`;
+    return {...env, errorStream: [...env.errorStream, error]}
   }
 
-  return utils[command](environment, ...args);
+  return utils[command](env, args);
 }
 
 const main = function() {
@@ -16,7 +17,14 @@ const main = function() {
   const sourceCode = fs.readFileSync(`./${file}`, 'utf-8');
   const parsedCode = parser(sourceCode);
 
-  parsedCode.reduce(execute, {PWD: process.env.PWD});
+  const environment = {
+    PWD: process.env.PWD, 
+    OLDPWD: process.env.OLDPWD, 
+    outputStream: [], 
+    errorStream: []
+  }
+
+  display(parsedCode.reduce(execute, environment));
 }
 
 main();
