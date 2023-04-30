@@ -1,7 +1,0 @@
-/Users/riya/workspace/js/projects/apna-bash/lib
-/Users/riya/workspace/js/projects/apna-bash
-/Users/riya/workspace/js/projects/apna-bash/workspace
-/Users/riya/workspace/js/projects/apna-bash/workspace/personal
-/Users/riya/workspace/js/projects/apna-bash/workspace
-.git .gitignore apna-script.ab error.txt lib main.js out.txt workspace
-.git .gitignore apna-script.ab error.txt lib main.js out.txt workspace

@@ -4,9 +4,9 @@ const tokenizer = function(string) {
   return {command, args}
 }
 
-const parser = function(sourceCode) {
+const parse = function(sourceCode) {
   const linesOfCode = sourceCode.trim().split(/\n+/);
   return linesOfCode.map(tokenizer);
 }
 
-exports.parser = parser;
+exports.parse = parse;
