@@ -1,6 +1,9 @@
+const isValidToken = function(token) {
+  return token !== '';
+}
 const tokenizer = function(string) {
   const tokens = string.split(/\s+/);
-  const [command, ...args] = tokens;
+  const [command, ...args] = tokens.filter(isValidToken);
   return {command, args}
 }
 

@@ -2,28 +2,45 @@ const fs = require('fs');
 const {resolvePath} = require('./path-handler.js');
 
 const pwd = function(env) {
-  return {...env, outputStream: [...env.outputStream, env.pwd]};
+  return {output: [env.pwd]};
 }
 
-const cd = function(env, path) {
-  if(path === undefined) return {...env, pwd: '/', oldPwd: env.pwd};
-  if(path === '-') return {...env, pwd: env.oldPwd, oldPwd: env.pwd};
+const cd = function(env, paths) {
+  if(paths.length > 1) {
+    const error= `cd: too many arguments`;
+    return {error: [error]};
+  }
+
+  const path = paths.toString();
+  if(paths.length === 0) return {env: {pwd: process.env.HOME, oldPwd: env.pwd}};
+  if(path === '-') return {env: {pwd: env.oldPwd, oldPwd: env.pwd}};
 
   const resolvedPath = resolvePath(env.pwd, path);
 
   if(!fs.existsSync(resolvedPath)) {
     const error= `cd: no such file or directory present: ${path}`;
-    return {...env, errorStream: [...env.errorStream, error]}
+    return {error: [error]};
   }
 
-  return {...env, pwd: resolvedPath, oldPwd: env.pwd};
+  return {env: {pwd: resolvedPath, oldPwd: env.pwd}};
 }
 
-const listContent = function(localEnv, path) {
-  const resolvedPath = resolvePath(localEnv.pwd, path);
-  const contents = fs.readdirSync(resolvedPath).join(' ');
-  localEnv.output.push(contents);
-  return localEnv;
+const formatOutput = function(streams) {
+  return streams;
+}
+
+const list = function(streams, pwd, path) {
+  const absPath = resolvePath(pwd, path);
+
+  if(!fs.existsSync(absPath)) {
+    errorMsg = `ls: ${path}: no such file or directory`;
+    streams.error.push(errorMsg);
+    return streams;
+  }
+
+  outputMsg = `${path}:\n${fs.readdirSync(absPath).join(' ')}`;
+  streams.output.push(outputMsg);
+  return streams;
 }
 
 const ls = function(env, paths) {
@@ -31,15 +48,11 @@ const ls = function(env, paths) {
     paths = [env.pwd];
   }
 
-  return paths.reduce(function(env, path){
-    let localEnv = {pwd: env.pwd, output: [], error: []};
-    localEnv = listContent(localEnv, path);
+  const streams = {output: [], error: []};
 
-    env.outputStream = [...env.outputStream, ...localEnv.output];
-    env.errorStream = [...env.errorStream, ...localEnv.error];
-
-    return env;
-  }, env);
+  return paths.reduce(function(streams, path) {
+    return list(streams, env.pwd, path);
+  }, streams);
 }
 
 exports.pwd = pwd;

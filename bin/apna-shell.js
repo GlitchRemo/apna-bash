@@ -5,8 +5,6 @@ const createEnvironment = function() {
   const environment = {
     pwd: process.env.PWD, 
     oldPwd: process.env.OLDPWD, 
-    outputStream: [], 
-    errorStream: []
   };
 
   return environment;
@@ -23,17 +21,30 @@ const isValidCommand = function(command) {
   return command !== undefined; 
 }
 
-const execute = function(parsedCode, env) {
-  return parsedCode.reduce(function({env, outputStream, errorStream}, {command, args}) {
-    const commandToExecute = commands[command];
+const execute = function({command, args}, env) {
+  const commandToExecute = commands[command];
 
-    if(!isValidCommand(commandToExecute)) {
-      const error = `apna-bash: command not found: ${command}`;
-      return {...env, errorStream: [...env.errorStream, error]}
-
-      return commandToExecute(env, expandWildcard(args, env.pwd));
-    }, {env, outputStream: [], errorStream: []});
+  if(!isValidCommand(commandToExecute)) {
+    const error = `apna-bash: command not found: ${command}`;
+    return {error: [error]}
   }
 
-    exports.execute = execute;
-    exports.createEnvironment = createEnvironment;
+  return commandToExecute(env, expandWildcard(args, env.pwd));
+}
+
+const apnaBash = function(parsedCode, env) {
+  const outputStream = [];
+  const errorStream = [];
+
+  return parsedCode.reduce(function({env, outputStream, errorStream}, lineOfCode) {
+    let {env: localEnv, output, error} = execute(lineOfCode, env);
+    outputStream = [...outputStream, output];
+    errorStream = [...errorStream, error];
+    env = {...env, ...localEnv};
+    return {env, outputStream, errorStream};
+
+  }, {env, outputStream, errorStream});
+}
+
+exports.apnaBash = apnaBash;
+exports.createEnvironment = createEnvironment;
